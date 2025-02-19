@@ -182,7 +182,7 @@ func ApiFilter(ctx *context.Context) {
 	urlPath := getUrlPath(ctx.Request.URL.Path)
 
 	objOwner, objName := "", ""
-	if urlPath != "/api/get-app-login" && urlPath != "/api/get-resource" {
+	if urlPath != "/api/get-app-login" && urlPath != "/api/get-resource" && urlPath != "/api/download-resource" {
 		var err error
 		objOwner, objName, err = getObject(ctx)
 		if err != nil {

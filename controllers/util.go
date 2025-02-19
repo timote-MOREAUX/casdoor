@@ -17,6 +17,9 @@ package controllers
 import (
 	"fmt"
 	"strings"
+	"io"
+	"path/filepath"
+	"net/http"
 
 	"github.com/casdoor/casdoor/conf"
 	"github.com/casdoor/casdoor/i18n"
@@ -63,6 +66,38 @@ func (c *ApiController) ResponseError(error string, data ...interface{}) {
 
 	resp := &Response{Status: "error", Msg: error}
 	c.ResponseJsonData(resp, data...)
+}
+
+// ResponseStreamData ...
+func (c *ApiController) ResponseStreamData(fileName string, fileStream io.ReadCloser) {
+	defer fileStream.Close()
+
+	// Set appropriate headers for file streaming
+	c.Ctx.Output.Header("Content-Disposition", "attachment; filename="+filepath.Base(fileName))
+	c.Ctx.Output.Header("Content-Type", "application/octet-stream")
+
+	// Stream the file content
+	_, err := io.Copy(c.Ctx.ResponseWriter, fileStream)
+	if err != nil {
+		c.Ctx.Output.SetStatus(http.StatusInternalServerError)
+		c.Ctx.Output.Body([]byte("Failed to stream file"))
+	}
+}
+
+// ResponseStreamOk ...
+func (c *ApiController) ResponseStreamOk(fileName string, fileStream io.ReadCloser) {
+	if fileStream == nil {
+		c.ResponseStreamError("File stream is nil")
+		return
+	}
+	c.ResponseStreamData(fileName, fileStream)
+}
+
+// ResponseStreamError ...
+func (c *ApiController) ResponseStreamError(errorMsg string) {
+	resp := &Response{Status: "error", Msg: errorMsg}
+	c.Data["json"] = resp
+	c.ServeJSON()
 }
 
 func (c *ApiController) T(error string) string {

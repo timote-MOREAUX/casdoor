@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"io"
 
 	"github.com/casdoor/casdoor/conf"
 	"github.com/casdoor/casdoor/i18n"
@@ -212,4 +213,42 @@ func refineObjectKey(provider *Provider, objectKey string) string {
 		return strings.TrimPrefix(objectKey, "/")
 	}
 	return objectKey
+}
+
+func DownloadFileAsStream(provider *Provider, fullFilePath string, lang string) (io.ReadCloser, error) {
+	storageProvider, err := getStorageProvider(provider, lang)
+	if err != nil {
+		return nil, err
+	}
+
+	_, objectKey := GetUploadFileUrl(provider, fullFilePath, true)
+	objectKeyRefined := refineObjectKey(provider, objectKey)
+
+	return storageProvider.GetStream(objectKeyRefined)
+}
+
+func DownloadFileAsStreamSafe(provider *Provider, fullFilePath string, lang string) (io.ReadCloser, error) {
+	fmt.Println("2")
+	// check fullFilePath is there security issue
+	if strings.Contains(fullFilePath, "..") {
+		return nil, fmt.Errorf("the fullFilePath: %s is not allowed", fullFilePath)
+	}
+
+	fmt.Println("3")
+
+	var fileBuffer io.ReadCloser
+	var err error
+	times := 0
+	for {
+		fileBuffer, err = DownloadFileAsStream(provider, fullFilePath, lang)
+		if err != nil {
+			times += 1
+			if times >= 5 {
+				return nil, err
+			}
+		} else {
+			break
+		}
+	}
+	return fileBuffer, err
 }

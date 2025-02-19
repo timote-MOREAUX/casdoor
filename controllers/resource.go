@@ -389,3 +389,40 @@ func (c *ApiController) UploadResource() {
 
 	c.ResponseOk(fileUrl, objectKey)
 }
+
+// DownloadResource
+// @Tag Resource API
+// @Title DownloadResource
+// @Description download resource
+// @Param   	id			query   	string     			true        		"The id ( owner/name ) of resource"
+// @Success 	200			{file}		binary				"Successful file download"
+// @router /download-resource [get]
+func (c *ApiController) DownloadResource() {
+	fmt.Println("0")
+	id := c.Input().Get("id")
+
+	resource, err := object.GetResource(id)
+	if err != nil {
+		c.ResponseStreamError(err.Error())
+		return
+	}
+	if resource == nil {
+		c.ResponseStreamError("File not found")
+	}
+
+	provider, err := c.GetProviderFromContext("Storage")
+	if err != nil {
+		c.ResponseStreamError(err.Error())
+		return
+	}
+
+	fileStream, err := object.DownloadFileAsStreamSafe(provider, resource.Name, c.GetAcceptLanguage())
+	if err != nil {
+		c.ResponseStreamError(err.Error())
+		return
+	} else if fileStream == nil {
+		c.ResponseStreamError("File not found")
+	}
+
+	c.ResponseStreamOk(resource.Name, fileStream)
+}

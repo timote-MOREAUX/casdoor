@@ -122,6 +122,7 @@ func initAPI() {
 	beego.Router("/api/add-resource", &controllers.ApiController{}, "POST:AddResource")
 	beego.Router("/api/delete-resource", &controllers.ApiController{}, "POST:DeleteResource")
 	beego.Router("/api/upload-resource", &controllers.ApiController{}, "POST:UploadResource")
+	beego.Router("/api/download-resource", &controllers.ApiController{}, "GET:DownloadResource")
 
 	beego.Router("/api/get-certs", &controllers.ApiController{}, "GET:GetCerts")
 	beego.Router("/api/get-global-certs", &controllers.ApiController{}, "GET:GetGlobalCerts")
